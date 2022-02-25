@@ -2,7 +2,8 @@
 from numpy import linspace, interp, meshgrid, asfarray, abs, mean
 from matplotlib import pyplot as plt
 import matplotlib.cm as cm
-from scipy import interpolate
+from scipy.interpolate import interp2d
+from math import sqrt
 
 def find_nearest(array, value):
     array = asfarray(array)
@@ -26,6 +27,12 @@ class Perenos:
     def append(self, depth, value):
         self._depths.append(depth)
         self._values.append(value)
+    
+    def min_depth(self):
+        return min(self._depths)
+    
+    def max_depth(self):
+        return max(self._depths)
 
 def load_perenos(fname):
     data = load_columns(fname, decimal=',')
@@ -44,10 +51,16 @@ def load_perenos(fname):
 def show_perenos_pnts(ax, perenos):
     for p in perenos:
         for d in p._depths:
-            ax.plot([p._xPos], [d], 'k.')
+            ax.plot([p._xPos], [d], 'k.', markersize=1)
 
 
-
+def interpoate_2d(X, Y, Z):
+    Nx, Ny = 300, 300
+    xx,yy = linspace(X[0][0], X[0][-1], Nx),linspace(Y[0][1], Y[-1][0], Ny)
+    xnew, ynew = meshgrid(xx,yy)
+    f = interp2d(X,Y,Z, kind='cubic')
+    znew = f(xx,yy)
+    return xnew, ynew, znew
 
 def build_perenos_data(aPerenos):
     xmin = aPerenos[ 0]._xPos
@@ -68,35 +81,63 @@ def build_perenos_data(aPerenos):
             depth = p._depths[idx]
             j = find_nearest(y, depth)
             D[j][i] = value
+    X,Y,D = interpoate_2d(X,Y,D)
     return X,Y,D
+
+class P2D:
+    def __init__(self, x=0.0, y=0.0) -> None:
+        self.x, self.y = x, y
+    
+    def dist2(self, other):
+        return (other.x - self.x)**2 + (other.y - self.y)**2
+    
+    def dist(self, other):
+        return sqrt(self.dist2(other))
+
+def find_depth_borer_polyline(aPerenos):
+    pnts = []
+    ul = P2D(aPerenos[0]._xPos, aPerenos[0].max_depth())
+    ur = P2D(aPerenos[-1]._xPos, aPerenos[-1].max_depth())
+    pnts.append(ul)
+    for p in aPerenos:
+        x = p._xPos
+        y = p.min_depth()
+        pnts.append(P2D(x, y))
+    pnts.append(ur)
+    pnts.append(ul)
+    return pnts
+
+def treat_day(ax, fname):
+    """
+    return: contour length
+    """
+    perenos = load_perenos(fname)
+    show_perenos_pnts(ax, perenos)
+    X,Y,D = build_perenos_data(perenos)
+    cs = ax.contour(X, Y, D)
+    ax.clabel(cs, inline=True, fontsize=10)
+    ext = (X[0][0], X[0][-1], Y[0][0], Y[-1][0])
+    # im = ax.imshow(D, aspect=0.5, origin='lower', cmap=cm.jet, extent=ext)
+    im = ax.pcolor(X, Y, D, cmap=cm.jet)
+
+    # find and show borders
+    pnts = find_depth_borer_polyline(perenos)
+    ax.plot([p.x for p in pnts], [p.y for p in pnts], 'r.-')
+
+    return sum([pnts[i].dist(pnts[i+1]) for i in range(len(pnts) - 1)])
 
 def main():
     fig, axs = plt.subplots(nrows=2, ncols=1)
+
     axs[1].set_xlabel('Distance')
     axs[0].set_ylabel('Depth')
     axs[1].set_ylabel('Depth')
 
-    perenos10 = load_perenos('10.08.copy.perenos.xlsx.dat')
-    perenos11 = load_perenos('11.08.copy.perenos.xlsx.dat')
-    show_perenos_pnts(axs[0], perenos10)
-    show_perenos_pnts(axs[1], perenos11)
+    perim10 = treat_day(axs[0], '10.08.copy.perenos.xlsx.dat')
+    perim11 = treat_day(axs[1], '11.08.copy.perenos.xlsx.dat')
 
-    X10,Y10,D10 = build_perenos_data(perenos10)
-    X11,Y11,D11 = build_perenos_data(perenos11)
-
-    extent10 = (X10[0][0], X10[0][-1], Y10[0][0], Y10[-1][0])
-    extent11 = (X11[0][0], X11[0][-1], Y11[0][0], Y11[-1][0])
-
-    im10 = axs[0].imshow(D10, interpolation='bilinear', origin='lower', cmap=cm.jet, extent=extent10)
-    im11 = axs[1].imshow(D11, interpolation='bilinear', origin='lower', cmap=cm.jet, extent=extent11)
-
-    cs10 = axs[0].contour(X10, Y10, D10)
-    cs11 = axs[1].contour(X11, Y11, D11)
-
-    axs[0].clabel(cs10, inline=True, fontsize=10)
-    axs[1].clabel(cs11, inline=True, fontsize=10)
-
-    plt.savefig("output_interp")
+    # fig0.tight_layout()
+    fig.savefig('output')
     pass
 
 if __name__ == '__main__':

@@ -55,7 +55,7 @@ def show_perenos_pnts(ax, perenos):
 
 
 def interpoate_2d(X, Y, Z):
-    Nx, Ny = 100, 100
+    Nx, Ny = 90,60
     xx,yy = linspace(X[0][0], X[0][-1], Nx),linspace(Y[0][1], Y[-1][0], Ny)
     xnew, ynew = meshgrid(xx,yy)
     f = interp2d(X,Y,Z, kind='cubic')
@@ -120,16 +120,15 @@ def treat_day(ax, fname):
     perenos = load_perenos(fname)
     show_perenos_pnts(ax, perenos)
     X,Y,D = build_perenos_data(perenos)
-    cs = ax.contour(X, Y, D, colors='k', levels=12, linewidths=0.5, linestyles='solid')
-    ax.clabel(cs, inline=True, fontsize=5)
+    cs = ax.contour(X, Y, D, colors='k', levels=15, linewidths=1, linestyles='solid')
+    ax.clabel(cs, inline=True, fontsize=12)
     ext = (X[0][0], X[0][-1], Y[0][0], Y[-1][0])
-    # im = ax.imshow(D, aspect=0.5, origin='lower', cmap=cm.jet, extent=ext)
     im = ax.pcolor(X, Y, D, cmap=cm.jet)
 
     # find and show borders
     pnts = find_border_polyline(perenos)
     perim = sum([pnts[i].dist(pnts[i+1]) for i in range(len(pnts) - 1)])
-    ax.plot([p.x for p in pnts], [p.y for p in pnts], 'r.-')
+    # ax.plot([p.x for p in pnts], [p.y for p in pnts], 'r.-')
 
     # draw blue polygons
     pnts = find_depth_border_polyline(perenos)
@@ -145,17 +144,20 @@ def treat_day(ax, fname):
     return perim
 
 def main():
-    fig, axs = plt.subplots(nrows=2, ncols=1)
+    fig, axs = plt.subplots(nrows=1, ncols=2)
+    fig.set_size_inches(20,6)
 
-    axs[1].set_xlabel('Distance')
-    axs[0].set_ylabel('Depth')
-    axs[1].set_ylabel('Depth')
+    axs[0].set_xlabel('Distance (km)')
+    axs[1].set_xlabel('Distance (km)')
+    axs[0].set_title('J(m/sec)*(mg/l)')
+    axs[1].set_title('J(m/sec)*(mg/l)')
+    axs[0].set_ylabel('Depth (m)')
 
     perim10 = treat_day(axs[0], '10.08.copy.perenos.xlsx.dat')
     perim11 = treat_day(axs[1], '11.08.copy.perenos.xlsx.dat')
 
     # fig0.tight_layout()
-    fig.savefig('output')
+    fig.savefig('output', dpi=300)
     pass
 
 if __name__ == '__main__':

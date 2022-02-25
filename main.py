@@ -1,6 +1,7 @@
 ﻿from pandas import read_table
-from numpy import linspace, interp, meshgrid, asfarray, abs
+from numpy import linspace, interp, meshgrid, asfarray, abs, mean
 from matplotlib import pyplot as plt
+import matplotlib.cm as cm
 from scipy import interpolate
 
 def find_nearest(array, value):
@@ -45,8 +46,11 @@ def show_perenos_pnts(ax, perenos):
         for d in p._depths:
             ax.plot([p._xPos], [d], 'k.')
 
+
+
+
 def build_perenos_data(aPerenos):
-    xmin = aPerenos[0]._xPos
+    xmin = aPerenos[ 0]._xPos
     xmax = aPerenos[-1]._xPos
     dmin = min([min(p._depths) for p in aPerenos])
     dmax = max([max(p._depths) for p in aPerenos])
@@ -55,7 +59,8 @@ def build_perenos_data(aPerenos):
     x = linspace(xmin, xmax, Nx)
     y = linspace(dmin, dmax, Ny)
     X,Y = meshgrid(x,y)
-    D = [[0.0 for i in range(len(x))] for j in range(len(y))]
+    m = mean([mean(p._values) for p in aPerenos]) # mean values
+    D = [[m for i in range(len(x))] for j in range(len(y))]
     for p in aPerenos:
         i = find_nearest(x,p._xPos)
         for idx in range(len(p._depths)):
@@ -78,8 +83,18 @@ def main():
 
     X10,Y10,D10 = build_perenos_data(perenos10)
     X11,Y11,D11 = build_perenos_data(perenos11)
-    axs[0].contour(X10, Y10, D10)
-    axs[1].contour(X11, Y11, D11)
+
+    extent10 = (X10[0][0], X10[0][-1], Y10[0][0], Y10[-1][0])
+    extent11 = (X11[0][0], X11[0][-1], Y11[0][0], Y11[-1][0])
+
+    im10 = axs[0].imshow(D10, interpolation='bilinear', origin='lower', cmap=cm.jet, extent=extent10)
+    im11 = axs[1].imshow(D11, interpolation='bilinear', origin='lower', cmap=cm.jet, extent=extent11)
+
+    cs10 = axs[0].contour(X10, Y10, D10)
+    cs11 = axs[1].contour(X11, Y11, D11)
+
+    axs[0].clabel(cs10, inline=True, fontsize=10)
+    axs[1].clabel(cs11, inline=True, fontsize=10)
 
     plt.savefig("output_interp")
     pass

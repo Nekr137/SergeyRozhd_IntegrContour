@@ -55,7 +55,7 @@ def show_perenos_pnts(ax, perenos):
 
 
 def interpoate_2d(X, Y, Z):
-    Nx, Ny = 90,60
+    Nx, Ny = 90, 60
     xx,yy = linspace(X[0][0], X[0][-1], Nx),linspace(Y[0][1], Y[-1][0], Ny)
     xnew, ynew = meshgrid(xx,yy)
     f = interp2d(X,Y,Z, kind='cubic')
@@ -120,7 +120,7 @@ def treat_day(ax, fname):
     perenos = load_perenos(fname)
     show_perenos_pnts(ax, perenos)
     X,Y,D = build_perenos_data(perenos)
-    cs = ax.contour(X, Y, D, colors='k', levels=15, linewidths=1, linestyles='solid')
+    cs = ax.contour(X, Y, D, colors='k', levels=15, linewidths=1, linestyles='solid', use_clabeltext=True)
     ax.clabel(cs, inline=True, fontsize=12)
     ext = (X[0][0], X[0][-1], Y[0][0], Y[-1][0])
     im = ax.pcolor(X, Y, D, cmap=cm.jet)

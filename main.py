@@ -55,7 +55,7 @@ def show_perenos_pnts(ax, perenos):
 
 
 def interpoate_2d(X, Y, Z):
-    Nx, Ny = 300, 300
+    Nx, Ny = 100, 100
     xx,yy = linspace(X[0][0], X[0][-1], Nx),linspace(Y[0][1], Y[-1][0], Ny)
     xnew, ynew = meshgrid(xx,yy)
     f = interp2d(X,Y,Z, kind='cubic')
@@ -94,15 +94,21 @@ class P2D:
     def dist(self, other):
         return sqrt(self.dist2(other))
 
-def find_depth_borer_polyline(aPerenos):
+def find_depth_border_polyline(aPerenos):
     pnts = []
-    ul = P2D(aPerenos[0]._xPos, aPerenos[0].max_depth())
-    ur = P2D(aPerenos[-1]._xPos, aPerenos[-1].max_depth())
-    pnts.append(ul)
     for p in aPerenos:
         x = p._xPos
         y = p.min_depth()
         pnts.append(P2D(x, y))
+    return pnts
+
+def find_border_polyline(aPerenos):
+    pnts = []
+    ul = P2D(aPerenos[0]._xPos, aPerenos[0].max_depth())
+    ur = P2D(aPerenos[-1]._xPos, aPerenos[-1].max_depth())
+    pnts.append(ul)
+    for p in find_depth_border_polyline(aPerenos):
+        pnts.append(p)
     pnts.append(ur)
     pnts.append(ul)
     return pnts
@@ -114,17 +120,29 @@ def treat_day(ax, fname):
     perenos = load_perenos(fname)
     show_perenos_pnts(ax, perenos)
     X,Y,D = build_perenos_data(perenos)
-    cs = ax.contour(X, Y, D)
-    ax.clabel(cs, inline=True, fontsize=10)
+    cs = ax.contour(X, Y, D, colors='k', levels=12, linewidths=0.5, linestyles='solid')
+    ax.clabel(cs, inline=True, fontsize=5)
     ext = (X[0][0], X[0][-1], Y[0][0], Y[-1][0])
     # im = ax.imshow(D, aspect=0.5, origin='lower', cmap=cm.jet, extent=ext)
     im = ax.pcolor(X, Y, D, cmap=cm.jet)
 
     # find and show borders
-    pnts = find_depth_borer_polyline(perenos)
+    pnts = find_border_polyline(perenos)
+    perim = sum([pnts[i].dist(pnts[i+1]) for i in range(len(pnts) - 1)])
     ax.plot([p.x for p in pnts], [p.y for p in pnts], 'r.-')
 
-    return sum([pnts[i].dist(pnts[i+1]) for i in range(len(pnts) - 1)])
+    # draw blue polygons
+    pnts = find_depth_border_polyline(perenos)
+    def make_lower_poly(p1, p2):
+        li = ax.get_ylim()
+        lo = li[0] #lowest point on the ax
+        x = [p1.x, p1.x, p2.x, p2.x]
+        y = [lo, p1.y, p2.y, lo]
+        ax.fill(x, y, color='k')
+    for i in range(len(pnts) - 1):
+        make_lower_poly(pnts[i], pnts[i+1])
+
+    return perim
 
 def main():
     fig, axs = plt.subplots(nrows=2, ncols=1)

@@ -1,14 +1,19 @@
-﻿import pandas as pd
-import numpy as np
+﻿from pandas import read_table
+from numpy import linspace, interp, meshgrid, asfarray, abs
 from matplotlib import pyplot as plt
+from scipy import interpolate
+
+def find_nearest(array, value):
+    array = asfarray(array)
+    return (abs(array - value)).argmin()
 
 def load_columns(fname, delimiter='\t', decimal=','):
-    data = pd.read_table(fname, sep=delimiter,header=None, dtype=float, decimal=decimal)
+    data = read_table(fname, sep=delimiter,header=None, dtype=float, decimal=decimal)
     return [list(col) for col in data.values.T]
 
 def interp(ax, cnt, xdata, ydata):
-    xx = np.linspace(xdata[0], xdata[-1], cnt)
-    yy = np.interp(xx, xdata, ydata)
+    xx = linspace(xdata[0], xdata[-1], cnt)
+    yy = interp(xx, xdata, ydata)
     return list(xx),list(yy)
 
 class Perenos:
@@ -35,6 +40,31 @@ def load_perenos(fname):
             i += 1
     return perenos
 
+def show_perenos_pnts(ax, perenos):
+    for p in perenos:
+        for d in p._depths:
+            ax.plot([p._xPos], [d], 'k.')
+
+def build_perenos_data(aPerenos):
+    xmin = aPerenos[0]._xPos
+    xmax = aPerenos[-1]._xPos
+    dmin = min([min(p._depths) for p in aPerenos])
+    dmax = max([max(p._depths) for p in aPerenos])
+    Nx = len(aPerenos)
+    Ny = len(aPerenos[0]._depths)
+    x = linspace(xmin, xmax, Nx)
+    y = linspace(dmin, dmax, Ny)
+    X,Y = meshgrid(x,y)
+    D = [[0.0 for i in range(len(x))] for j in range(len(y))]
+    for p in aPerenos:
+        i = find_nearest(x,p._xPos)
+        for idx in range(len(p._depths)):
+            value = p._values[idx]
+            depth = p._depths[idx]
+            j = find_nearest(y, depth)
+            D[j][i] = value
+    return X,Y,D
+
 def main():
     fig, axs = plt.subplots(nrows=2, ncols=1)
     axs[1].set_xlabel('Distance')
@@ -43,28 +73,14 @@ def main():
 
     perenos10 = load_perenos('10.08.copy.perenos.xlsx.dat')
     perenos11 = load_perenos('11.08.copy.perenos.xlsx.dat')
-    def show_perenos(ax, perenos):
-        for p in perenos:
-            for d in p._depths:
-                ax.plot([p._xPos], [d], 'k.')
-    pnts10 = show_perenos(axs[0], perenos10)
-    pnts11 = show_perenos(axs[1], perenos11)
+    show_perenos_pnts(axs[0], perenos10)
+    show_perenos_pnts(axs[1], perenos11)
 
-    dno10 = load_columns('dno(10.08.21).bln',delimiter=',', decimal='.')
-    dno11 = load_columns('dno(11.08.21).bln',delimiter=',', decimal='.')
-    # removing the closing of regions
-    dno10 = dno10[0][1:-2], dno10[1][1:-2]
-    dno11 = dno11[0][1:-2], dno11[1][1:-2]
-    axs[0].plot(dno10[0],dno10[1], 'kx', label='topology')
-    axs[1].plot(dno11[0],dno11[1], 'kx', label='topology')
+    X10,Y10,D10 = build_perenos_data(perenos10)
+    X11,Y11,D11 = build_perenos_data(perenos11)
+    axs[0].contour(X10, Y10, D10)
+    axs[1].contour(X11, Y11, D11)
 
-    # interpolating the date
-    dno10_interp = interp(axs[0], len(perenos10), dno10[0], dno10[1])
-    dno11_interp = interp(axs[1], len(perenos11), dno11[0], dno11[1])
-    axs[0].plot(dno10_interp[0], dno10_interp[1], 'r.-', label='interp')
-    axs[1].plot(dno11_interp[0], dno11_interp[1], 'r.-', label='interp')
-
-    plt.legend()
     plt.savefig("output_interp")
     pass
 

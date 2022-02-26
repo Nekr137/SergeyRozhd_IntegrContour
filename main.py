@@ -75,14 +75,19 @@ def build_perenos_data(aPerenos):
     x = linspace(xmin, xmax, Nx)
     y = linspace(dmin, dmax, Ny)
     X,Y = meshgrid(x,y)
-    m = mean([p.get_mean_values() for p in aPerenos]) # mean values
-    D = [[m for i in range(len(x))] for j in range(len(y))]
-    for p in aPerenos:
-        i = find_nearest(x,p._xPos)
-        for v in p.get_sorted_by_depths():
-            j = find_nearest(y, v[0])
-            D[j][i] = v[1]
-    X,Y,D = interpoate_2d(X,Y,D)
+    D = [[1e6 for i in range(Nx)] for j in range(Ny)]
+    for i in range(Nx):
+        for j in range(Ny):
+            p1 = P2D(x[i], y[j])
+            min_dist2 = 1e12
+            for p in aPerenos:
+                for v in p.get_sorted_by_depths():
+                    p2 = P2D(p._xPos, v[0])
+                    dist2 = p1.dist2(p2)
+                    if dist2 < min_dist2:
+                        min_dist2 = dist2
+                        D[j][i] = v[1]
+    # X,Y,D = interpoate_2d(X,Y,D)
     return X,Y,D
 
 class P2D:

@@ -5,6 +5,8 @@ import matplotlib.cm as cm
 from scipy.interpolate import interp2d
 from math import sqrt
 
+from Perenos import Perenos
+
 def find_nearest(array, value):
     array = asfarray(array)
     return (abs(array - value)).argmin()
@@ -17,22 +19,6 @@ def interp(ax, cnt, xdata, ydata):
     xx = linspace(xdata[0], xdata[-1], cnt)
     yy = interp(xx, xdata, ydata)
     return list(xx),list(yy)
-
-class Perenos:
-    def __init__(self, xPos) -> None:
-        self._xPos = xPos
-        self._depths = []
-        self._values = []
-
-    def append(self, depth, value):
-        self._depths.append(depth)
-        self._values.append(value)
-    
-    def min_depth(self):
-        return min(self._depths)
-    
-    def max_depth(self):
-        return max(self._depths)
 
 def load_perenos(fname):
     data = load_columns(fname, decimal=',')
@@ -48,11 +34,26 @@ def load_perenos(fname):
             i += 1
     return perenos
 
-def show_perenos_pnts(ax, perenos):
-    for p in perenos:
-        for d in p._depths:
-            ax.plot([p._xPos], [d], 'k.', markersize=1)
+def diff(aValues):
+    return [aValues(i+1) - aValues(i) for i in range(len(aValues) - 1)]
 
+def make_perenos_squared(aPerenos):
+    total_depth_bottom = min([p.get_min_depth()[0] for p in aPerenos])
+    for p in aPerenos:
+        depth_step = p.get_depth_step()
+        sorted_by_depths = p.get_sorted_by_depths()
+        curr_bottom = sorted_by_depths[0][0]
+        curr_value = sorted_by_depths[0][1]
+        new_bottom = curr_bottom - depth_step
+        while new_bottom > total_depth_bottom:
+            p.append(new_bottom, curr_value)
+            new_bottom -= depth_step
+    return aPerenos
+
+def show_perenos_pnts(ax, perenos, style='k.'):
+    for p in perenos:
+        for v in p.get_sorted_by_depths():
+            ax.plot([p._xPos], [v[0]], style, markersize=1)
 
 def interpoate_2d(X, Y, Z):
     Nx, Ny = 90, 60
@@ -65,22 +66,20 @@ def interpoate_2d(X, Y, Z):
 def build_perenos_data(aPerenos):
     xmin = aPerenos[ 0]._xPos
     xmax = aPerenos[-1]._xPos
-    dmin = min([min(p._depths) for p in aPerenos])
-    dmax = max([max(p._depths) for p in aPerenos])
+    dmin = min([min(p.get_depths()) for p in aPerenos])
+    dmax = max([max(p.get_depths()) for p in aPerenos])
     Nx = len(aPerenos)
-    Ny = len(aPerenos[0]._depths)
+    Ny = len(aPerenos[0].get_depths())
     x = linspace(xmin, xmax, Nx)
     y = linspace(dmin, dmax, Ny)
     X,Y = meshgrid(x,y)
-    m = mean([mean(p._values) for p in aPerenos]) # mean values
+    m = mean([p.get_mean_values() for p in aPerenos]) # mean values
     D = [[m for i in range(len(x))] for j in range(len(y))]
     for p in aPerenos:
         i = find_nearest(x,p._xPos)
-        for idx in range(len(p._depths)):
-            value = p._values[idx]
-            depth = p._depths[idx]
-            j = find_nearest(y, depth)
-            D[j][i] = value
+        for v in p.get_sorted_by_depths():
+            j = find_nearest(y, v[0])
+            D[j][i] = v[1]
     X,Y,D = interpoate_2d(X,Y,D)
     return X,Y,D
 
@@ -98,14 +97,14 @@ def find_depth_border_polyline(aPerenos):
     pnts = []
     for p in aPerenos:
         x = p._xPos
-        y = p.min_depth()
+        y = p.get_min_depth()[0]
         pnts.append(P2D(x, y))
     return pnts
 
 def find_border_polyline(aPerenos):
     pnts = []
-    ul = P2D(aPerenos[0]._xPos, aPerenos[0].max_depth())
-    ur = P2D(aPerenos[-1]._xPos, aPerenos[-1].max_depth())
+    ul = P2D(aPerenos[0]._xPos, aPerenos[0].get_max_depth()[0])
+    ur = P2D(aPerenos[-1]._xPos, aPerenos[-1].get_max_depth()[0])
     pnts.append(ul)
     for p in find_depth_border_polyline(aPerenos):
         pnts.append(p)
@@ -117,8 +116,10 @@ def treat_day(ax, fname):
     """
     return: contour length
     """
-    perenos = load_perenos(fname)
-    show_perenos_pnts(ax, perenos)
+    perenos_orig = load_perenos(fname)
+    perenos = make_perenos_squared(perenos_orig)
+    show_perenos_pnts(ax, perenos,'k.')
+    show_perenos_pnts(ax, perenos_orig,'r.')
     X,Y,D = build_perenos_data(perenos)
     cs = ax.contour(X, Y, D, colors='k', levels=15, linewidths=1, linestyles='solid', use_clabeltext=True)
     ax.clabel(cs, inline=True, fontsize=12)

@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 from scipy.interpolate import interp2d
 from math import sqrt
+from copy import deepcopy
 
 from Perenos import Perenos
 
@@ -39,7 +40,8 @@ def diff(aValues):
 
 def make_perenos_squared(aPerenos):
     total_depth_bottom = min([p.get_min_depth()[0] for p in aPerenos])
-    for p in aPerenos:
+    aPerenosCopy = deepcopy(aPerenos)
+    for p in aPerenosCopy:
         depth_step = p.get_depth_step()
         sorted_by_depths = p.get_sorted_by_depths()
         curr_bottom = sorted_by_depths[0][0]
@@ -48,12 +50,12 @@ def make_perenos_squared(aPerenos):
         while new_bottom > total_depth_bottom:
             p.append(new_bottom, curr_value)
             new_bottom -= depth_step
-    return aPerenos
+    return aPerenosCopy
 
 def show_perenos_pnts(ax, perenos, style='k.'):
     for p in perenos:
         for v in p.get_sorted_by_depths():
-            ax.plot([p._xPos], [v[0]], style, markersize=1)
+            ax.plot([p._xPos], [v[0]], style, markersize=3)
 
 def interpoate_2d(X, Y, Z):
     Nx, Ny = 90, 60
@@ -118,21 +120,20 @@ def treat_day(ax, fname):
     """
     perenos_orig = load_perenos(fname)
     perenos = make_perenos_squared(perenos_orig)
-    show_perenos_pnts(ax, perenos,'k.')
+    show_perenos_pnts(ax, perenos,'g.')
     show_perenos_pnts(ax, perenos_orig,'r.')
     X,Y,D = build_perenos_data(perenos)
     cs = ax.contour(X, Y, D, colors='k', levels=15, linewidths=1, linestyles='solid', use_clabeltext=True)
     ax.clabel(cs, inline=True, fontsize=12)
-    ext = (X[0][0], X[0][-1], Y[0][0], Y[-1][0])
-    im = ax.pcolor(X, Y, D, cmap=cm.jet)
+    ax.pcolor(X, Y, D, cmap=cm.jet)
 
     # find and show borders
-    pnts = find_border_polyline(perenos)
+    pnts = find_border_polyline(perenos_orig)
     perim = sum([pnts[i].dist(pnts[i+1]) for i in range(len(pnts) - 1)])
     # ax.plot([p.x for p in pnts], [p.y for p in pnts], 'r.-')
 
     # draw blue polygons
-    pnts = find_depth_border_polyline(perenos)
+    pnts = find_depth_border_polyline(perenos_orig)
     def make_lower_poly(p1, p2):
         li = ax.get_ylim()
         lo = li[0] #lowest point on the ax

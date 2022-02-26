@@ -87,7 +87,7 @@ def build_perenos_data(aPerenos):
                     if dist2 < min_dist2:
                         min_dist2 = dist2
                         D[j][i] = v[1]
-    # X,Y,D = interpoate_2d(X,Y,D)
+    X,Y,D = interpoate_2d(X,Y,D)
     return X,Y,D
 
 class P2D:
@@ -152,13 +152,17 @@ def treat_day(ax, fname):
 
 def main():
     fig, axs = plt.subplots(nrows=1, ncols=2)
-    fig.set_size_inches(20,6)
+    w = 18.0 
+    h = w / 10.0 * 3.0
+    fig.set_size_inches(w,h)
 
-    axs[0].set_xlabel('Distance (km)')
-    axs[1].set_xlabel('Distance (km)')
-    axs[0].set_title('J(m/sec)*(mg/l)')
-    axs[1].set_title('J(m/sec)*(mg/l)')
-    axs[0].set_ylabel('Depth (m)')
+    fontsize = 14
+    axs[0].set_xlabel('Distance (km)', fontsize=fontsize)
+    axs[1].set_xlabel('Distance (km)', fontsize=fontsize)
+    axs[0].set_title('J(m/sec)*(mg/l)   10.08.2021', fontsize=fontsize)
+    axs[1].set_title('J(m/sec)*(mg/l)   11.08.2021', fontsize=fontsize)
+    axs[0].set_ylabel('Depth (m)', fontsize=fontsize)
+    axs[1].set_ylabel('Depth (m)', fontsize=fontsize)
 
     perim10 = treat_day(axs[0], '10.08.copy.perenos.xlsx.dat')
     perim11 = treat_day(axs[1], '11.08.copy.perenos.xlsx.dat')

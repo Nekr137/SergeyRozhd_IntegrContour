@@ -8,6 +8,8 @@ from copy import deepcopy
 
 from Perenos import Perenos
 
+DARK_BLUE = (0.0, 0.0, 0.3)
+
 def find_nearest(array, value):
     array = asfarray(array)
     return (abs(array - value)).argmin()
@@ -125,8 +127,8 @@ def treat_day(ax, fname):
     """
     perenos_orig = load_perenos(fname)
     perenos = make_perenos_squared(perenos_orig)
-    show_perenos_pnts(ax, perenos,'g.')
-    show_perenos_pnts(ax, perenos_orig,'r.')
+    # show_perenos_pnts(ax, perenos,'g.')
+    # show_perenos_pnts(ax, perenos_orig,'r.')
     X,Y,D = build_perenos_data(perenos)
     cs = ax.contour(X, Y, D, colors='k', levels=15, linewidths=1, linestyles='solid', use_clabeltext=True)
     cl = ax.clabel(cs, inline=True, fontsize=12)
@@ -146,7 +148,7 @@ def treat_day(ax, fname):
         lo = li[0] #lowest point on the ax
         x = [p1.x, p1.x, p2.x, p2.x]
         y = [lo, p1.y, p2.y, lo]
-        ax.fill(x, y, color='b', zorder=10)
+        ax.fill(x, y, color=DARK_BLUE, zorder=10)
     for i in range(len(pnts) - 1):
         make_lower_poly(pnts[i], pnts[i+1])
 

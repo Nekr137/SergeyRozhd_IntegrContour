@@ -130,8 +130,8 @@ def treat_day(ax, fname):
     X,Y,D = build_perenos_data(perenos)
     cs = ax.contour(X, Y, D, colors='k', levels=15, linewidths=1, linestyles='solid', use_clabeltext=True)
     cl = ax.clabel(cs, inline=True, fontsize=12)
-    ax.pcolor(X, Y, D, cmap=cm.jet)
-    ax.figure.savefig('tmp')
+    pc = ax.pcolor(X, Y, D, cmap=cm.jet)
+    ax.figure.colorbar(pc, ax=ax)
 
     # find and show borders
     pnts = find_border_polyline(perenos_orig)
@@ -140,7 +140,7 @@ def treat_day(ax, fname):
 
     # draw blue polygons
     pnts = find_depth_border_polyline(perenos_orig)
-    ax.set_xlim(pnts[0].x, pnts[-1].x)
+    ax.set_xlim(pnts[0].x, pnts[-1].x) # fix limits a little bit
     def make_lower_poly(p1, p2):
         li = ax.get_ylim()
         lo = li[0] #lowest point on the ax

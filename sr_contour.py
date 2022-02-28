@@ -42,13 +42,12 @@ def sr_contour(ax, X, Y, D):
     levels=20
     linewidth=1
     linestyle='solid'
-    use_clabeltext=True
     fontsize=9
     inline=True
     colors='k'
 
     # building fake contour to find labels
-    cs = ax.contour(X, Y, D, colors=colors, levels=levels, linewidths=linewidth, linestyles=linestyle, use_clabeltext=use_clabeltext)
+    cs = ax.contour(X, Y, D, colors=colors, levels=levels, linewidths=linewidth, linestyles=linestyle)
     cl1 = ax.clabel(cs, inline=inline, fontsize=fontsize)
 
     # removing overlapped labels
@@ -56,6 +55,6 @@ def sr_contour(ax, X, Y, D):
     manual_pos = [c.get_position() for c in cl1 if c.get_visible() == True]
 
     # build real contour
-    cs2 = ax.contour(X, Y, D, colors=colors, levels=levels, linewidths=linewidth, linestyles=linestyle, use_clabeltext=use_clabeltext)
+    cs2 = ax.contour(X, Y, D, colors=colors, levels=levels, linewidths=linewidth, linestyles=linestyle)
     cl2 = ax.clabel(cs2, inline=inline, fontsize=fontsize, manual=manual_pos)
 

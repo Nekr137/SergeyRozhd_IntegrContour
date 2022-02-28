@@ -16,6 +16,7 @@ FONTSIZE = 14
 DPI = 300
 COLORBAR_LIMITS = (-0.4, 0.4)
 POLYGON_COLOR = (0.0, 0.0, 0.3)
+INTERP_NX, INTERP_NY = 180, 120
 
 def find_nearest(array, value):
     array = asfarray(array)
@@ -67,8 +68,7 @@ def show_perenos_pnts(ax, perenos, style='k.'):
             ax.plot([p._xPos], [v[0]], style, markersize=3)
 
 def interpoate_2d(X, Y, Z):
-    Nx, Ny = 90, 60
-    xx,yy = linspace(X[0][0], X[0][-1], Nx),linspace(Y[0][1], Y[-1][0], Ny)
+    xx,yy = linspace(X[0][0], X[0][-1], INTERP_NX),linspace(Y[0][1], Y[-1][0], INTERP_NY)
     xnew, ynew = meshgrid(xx,yy)
     f = interp2d(X,Y,Z, kind='cubic')
     znew = f(xx,yy)

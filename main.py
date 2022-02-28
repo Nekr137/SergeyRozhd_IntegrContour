@@ -7,11 +7,13 @@ from math import sqrt
 from copy import deepcopy
 from adjustText import adjust_text
 
-from Perenos import Perenos
+from sr_perenos import Perenos
 from sr_contour import sr_contour
 
-DARK_BLUE = (0.0, 0.0, 0.3)
+FONTSIZE = 14
 DPI = 300
+COLORBAR_LIMITS = (-0.4, 0.4)
+POLYGON_COLOR = (0.0, 0.0, 0.3)
 
 def find_nearest(array, value):
     array = asfarray(array)
@@ -136,7 +138,7 @@ def treat_day(ax, fname):
 
     sr_contour(ax, X, Y, D)
     
-    pc = ax.pcolor(X, Y, D, cmap=cm.jet)
+    pc = ax.pcolor(X, Y, D, cmap=cm.jet, vmin=COLORBAR_LIMITS[0], vmax=COLORBAR_LIMITS[1])
     ax.figure.colorbar(pc, ax=ax)
 
     # find and show borders
@@ -152,7 +154,7 @@ def treat_day(ax, fname):
         lo = li[0] #lowest point on the ax
         x = [p1.x, p1.x, p2.x, p2.x]
         y = [lo, p1.y, p2.y, lo]
-        ax.fill(x, y, color=DARK_BLUE, zorder=10)
+        ax.fill(x, y, color=POLYGON_COLOR, zorder=100)
     for i in range(len(pnts) - 1):
         make_lower_poly(pnts[i], pnts[i+1])
 
@@ -164,16 +166,19 @@ def main():
     h = w / 10.0 * 3.0
     fig.set_size_inches(w,h)
 
-    fontsize = 14
-    axs[0].set_xlabel('Distance (km)', fontsize=fontsize)
-    axs[1].set_xlabel('Distance (km)', fontsize=fontsize)
-    axs[0].set_title('J(m/sec)*(mg/l)   10.08.2021', fontsize=fontsize)
-    axs[1].set_title('J(m/sec)*(mg/l)   11.08.2021', fontsize=fontsize)
-    axs[0].set_ylabel('Depth (m)', fontsize=fontsize)
-    axs[1].set_ylabel('Depth (m)', fontsize=fontsize)
+    axs[0].set_xlabel('Distance (km)', fontsize=FONTSIZE)
+    axs[1].set_xlabel('Distance (km)', fontsize=FONTSIZE)
+    axs[0].set_title('J(m/sec)*(mg/l)   10.08.2021', fontsize=FONTSIZE)
+    axs[1].set_title('J(m/sec)*(mg/l)   11.08.2021', fontsize=FONTSIZE)
+    axs[0].set_ylabel('Depth (m)', fontsize=FONTSIZE)
+    axs[1].set_ylabel('Depth (m)', fontsize=FONTSIZE)
 
     perim10 = treat_day(axs[0], '10.08.copy.perenos.xlsx.dat')
     perim11 = treat_day(axs[1], '11.08.copy.perenos.xlsx.dat')
+
+    with open('output.txt', 'w', encoding='utf-8') as f:
+        f.write('perim 10.08\tperim 11.08\n')
+        f.write('{}\t{}\n'.format(perim10, perim11))
 
     # fig0.tight_layout()
     fig.savefig('output', dpi=DPI)

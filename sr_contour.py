@@ -39,13 +39,14 @@ class Cntr:
                         ti.set_visible(False)
 
 def sr_contour(ax, X, Y, D):
-    levels = 20
-    linewidth = 1
-    linestyle = 'solid'
-    use_clabeltext = True
-    fontsize = 9
-    inline = True
-    colors = 'k'
+    levels=20
+    linewidth=1
+    linestyle='solid'
+    use_clabeltext=True
+    fontsize=9
+    inline=True
+    colors='k'
+
     # building fake contour to find labels
     cs = ax.contour(X, Y, D, colors=colors, levels=levels, linewidths=linewidth, linestyles=linestyle, use_clabeltext=use_clabeltext)
     cl1 = ax.clabel(cs, inline=inline, fontsize=fontsize)

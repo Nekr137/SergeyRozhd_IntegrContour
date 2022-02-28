@@ -198,10 +198,14 @@ def treat_day(ax, fname):
     return integr
 
 def main():
-    fig, axs = plt.subplots(nrows=1, ncols=2)
-    w = 18.0 
-    h = w / 10.0 * 3.0
-    fig.set_size_inches(w,h)
+    fig1, ax1 = plt.subplots(1,1)
+    fig2, ax2 = plt.subplots(1,1)
+    axs = [ax1, ax2]
+
+    # fig, axs = plt.subplots(nrows=1, ncols=2)
+    # w = 18.0 
+    # h = w / 10.0 * 3.0
+    # fig.set_size_inches(w,h)
 
     axs[0].set_xlabel('Distance (km)', fontsize=FONTSIZE)
     axs[1].set_xlabel('Distance (km)', fontsize=FONTSIZE)
@@ -219,8 +223,8 @@ def main():
     with open('output.txt', 'w', encoding='utf-8') as f:
         f.write(s)
 
-    # fig0.tight_layout()
-    fig.savefig('output', dpi=DPI)
+    fig1.savefig('output10', dpi=DPI)
+    fig2.savefig('output11', dpi=DPI)
     pass
 
 if __name__ == '__main__':

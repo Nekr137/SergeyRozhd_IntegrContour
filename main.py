@@ -10,6 +10,8 @@ from adjustText import adjust_text
 from sr_perenos import Perenos
 from sr_contour import sr_contour
 
+M2KM = 1e-3
+
 FONTSIZE = 14
 DPI = 300
 COLORBAR_LIMITS = (-0.4, 0.4)
@@ -126,6 +128,13 @@ def find_border_polyline(aPerenos):
     pnts.append(ul)
     return pnts
 
+def find_contour_length(aPerenos):
+    pnts = find_border_polyline(aPerenos)
+    # ax.plot([p.x for p in pnts], [p.y for p in pnts], 'r.-')
+    pnts = [P2D(p.x, p.y*M2KM) for p in pnts]
+    return sum([pnts[i].dist(pnts[i+1]) for i in range(len(pnts) - 1)])
+
+
 def treat_day(ax, fname):
     """
     return: contour length
@@ -141,10 +150,7 @@ def treat_day(ax, fname):
     pc = ax.pcolor(X, Y, D, cmap=cm.jet, vmin=COLORBAR_LIMITS[0], vmax=COLORBAR_LIMITS[1])
     ax.figure.colorbar(pc, ax=ax)
 
-    # find and show borders
-    pnts = find_border_polyline(perenos_orig)
-    perim = sum([pnts[i].dist(pnts[i+1]) for i in range(len(pnts) - 1)])
-    # ax.plot([p.x for p in pnts], [p.y for p in pnts], 'r.-')
+    perim = find_contour_length(perenos_orig)
 
     # draw blue polygons
     pnts = find_depth_border_polyline(perenos_orig)

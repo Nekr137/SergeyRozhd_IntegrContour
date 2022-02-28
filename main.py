@@ -16,7 +16,9 @@ FONTSIZE = 14
 DPI = 300
 COLORBAR_LIMITS = (-0.4, 0.4)
 POLYGON_COLOR = (0.0, 0.0, 0.3)
-INTERP_NX, INTERP_NY = 180, 120
+
+INTERP_NX, INTERP_NY = 90, 60 
+CONTOUR_INTERP = 500
 
 def find_nearest(array, value):
     array = asfarray(array)
@@ -26,7 +28,7 @@ def load_columns(fname, delimiter='\t', decimal=','):
     data = read_table(fname, sep=delimiter,header=None, dtype=float, decimal=decimal)
     return [list(col) for col in data.values.T]
 
-def interp(ax, cnt, xdata, ydata):
+def interp_line(ax, cnt, xdata, ydata):
     xx = linspace(xdata[0], xdata[-1], cnt)
     yy = interp(xx, xdata, ydata)
     return list(xx),list(yy)
@@ -128,11 +130,38 @@ def find_border_polyline(aPerenos):
     pnts.append(ul)
     return pnts
 
-def find_contour_length(aPerenos):
-    pnts = find_border_polyline(aPerenos)
-    # ax.plot([p.x for p in pnts], [p.y for p in pnts], 'r.-')
-    pnts = [P2D(p.x, p.y*M2KM) for p in pnts]
-    return sum([pnts[i].dist(pnts[i+1]) for i in range(len(pnts) - 1)])
+def interp_line(cnt, xdata, ydata):
+    xx = linspace(xdata[0], xdata[-1], cnt)
+    yy = interp(xx, xdata, ydata)
+    return list(xx),list(yy)
+
+def interp_polyline(cnt, polyline):
+    x = [p.x for p in polyline]
+    y = [p.y for p in polyline]
+    tmpx, xx = interp_line(cnt, list(range(len(x))), x)
+    tmpy, yy = interp_line(cnt, list(range(len(y))), y)
+    return [P2D(xx[i], yy[i]) for i in range(len(xx))]
+
+def find_contour_integr(polyline, X, Y, D, ax):
+    pnts = interp_polyline(CONTOUR_INTERP, polyline)
+    xx = X[0]
+    yy = [v[0] for v in Y]
+    sums = [] 
+    
+    for idx, p in enumerate(pnts):
+        i = find_nearest(xx, p.x)
+        j = find_nearest(yy, p.y)
+        pkm = P2D(p.x, M2KM*p.y)
+        value = D[j][i]
+        if not idx == 0:
+            dist = pkm.dist(prev_pnt_km)
+            if dist < 1e-10:
+                print('c', end='')
+                continue
+            sums.append(0.5 * (value + prev_val) * dist)
+        prev_val = value
+        prev_pnt_km = pkm
+    return sum(sums)
 
 
 def treat_day(ax, fname):
@@ -150,7 +179,9 @@ def treat_day(ax, fname):
     pc = ax.pcolor(X, Y, D, cmap=cm.jet, vmin=COLORBAR_LIMITS[0], vmax=COLORBAR_LIMITS[1])
     ax.figure.colorbar(pc, ax=ax)
 
-    perim = find_contour_length(perenos_orig)
+    polyline = find_border_polyline(perenos_orig)
+    # ax.plot([p.x for p in polyline], [p.y for p in polyline], 'r.-')
+    integr = find_contour_integr(polyline, X, Y, D, ax)
 
     # draw blue polygons
     pnts = find_depth_border_polyline(perenos_orig)
@@ -164,7 +195,7 @@ def treat_day(ax, fname):
     for i in range(len(pnts) - 1):
         make_lower_poly(pnts[i], pnts[i+1])
 
-    return perim
+    return integr
 
 def main():
     fig, axs = plt.subplots(nrows=1, ncols=2)
@@ -179,12 +210,14 @@ def main():
     axs[0].set_ylabel('Depth (m)', fontsize=FONTSIZE)
     axs[1].set_ylabel('Depth (m)', fontsize=FONTSIZE)
 
-    perim10 = treat_day(axs[0], '10.08.copy.perenos.xlsx.dat')
-    perim11 = treat_day(axs[1], '11.08.copy.perenos.xlsx.dat')
+    contour_integr10 = treat_day(axs[0], '10.08.copy.perenos.xlsx.dat')
+    contour_integr11 = treat_day(axs[1], '11.08.copy.perenos.xlsx.dat')
 
+    s = 'Contour integr (10.08)\tContour integr (11.08)\n'
+    s += '{}\t{}\n'.format(contour_integr10, contour_integr11)
+    print(s)
     with open('output.txt', 'w', encoding='utf-8') as f:
-        f.write('perim 10.08\tperim 11.08\n')
-        f.write('{}\t{}\n'.format(perim10, perim11))
+        f.write(s)
 
     # fig0.tight_layout()
     fig.savefig('output', dpi=DPI)

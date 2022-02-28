@@ -5,10 +5,13 @@ import matplotlib.cm as cm
 from scipy.interpolate import interp2d
 from math import sqrt
 from copy import deepcopy
+from adjustText import adjust_text
 
 from Perenos import Perenos
+from sr_contour import sr_contour
 
 DARK_BLUE = (0.0, 0.0, 0.3)
+DPI = 300
 
 def find_nearest(array, value):
     array = asfarray(array)
@@ -130,8 +133,9 @@ def treat_day(ax, fname):
     # show_perenos_pnts(ax, perenos,'g.')
     # show_perenos_pnts(ax, perenos_orig,'r.')
     X,Y,D = build_perenos_data(perenos)
-    cs = ax.contour(X, Y, D, colors='k', levels=15, linewidths=1, linestyles='solid', use_clabeltext=True)
-    cl = ax.clabel(cs, inline=True, fontsize=12)
+
+    sr_contour(ax, X, Y, D)
+    
     pc = ax.pcolor(X, Y, D, cmap=cm.jet)
     ax.figure.colorbar(pc, ax=ax)
 
@@ -172,7 +176,7 @@ def main():
     perim11 = treat_day(axs[1], '11.08.copy.perenos.xlsx.dat')
 
     # fig0.tight_layout()
-    fig.savefig('output', dpi=300)
+    fig.savefig('output', dpi=DPI)
     pass
 
 if __name__ == '__main__':

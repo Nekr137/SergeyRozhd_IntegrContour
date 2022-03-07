@@ -214,17 +214,17 @@ def main():
     axs[0].set_ylabel('Depth (m)', fontsize=FONTSIZE)
     axs[1].set_ylabel('Depth (m)', fontsize=FONTSIZE)
 
-    contour_integr10 = treat_day(axs[0], '10.08.copy.perenos.xlsx.dat')
-    contour_integr11 = treat_day(axs[1], '11.08.copy.perenos.xlsx.dat')
+    contour_integr10 = treat_day(axs[0], 'Data/10.08.copy.perenos.xlsx.dat')
+    contour_integr11 = treat_day(axs[1], 'Data/11.08.copy.perenos.xlsx.dat')
 
     s = 'Contour integr (10.08)\tContour integr (11.08)\n'
     s += '{}\t{}\n'.format(contour_integr10, contour_integr11)
     print(s)
-    with open('output.txt', 'w', encoding='utf-8') as f:
+    with open('Output/output.txt', 'w', encoding='utf-8') as f:
         f.write(s)
 
-    fig1.savefig('output10', dpi=DPI)
-    fig2.savefig('output11', dpi=DPI)
+    fig1.savefig('Output/output10', dpi=DPI)
+    fig2.savefig('Output/output11', dpi=DPI)
     pass
 
 if __name__ == '__main__':
